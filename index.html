@@ -356,7 +356,7 @@
         
         /* Debug info */
         .debug-info {
-            display: none;
+            display: block;
             background-color: rgba(255, 0, 0, 0.1);
             border: 1px solid #ff0000;
             border-radius: 10px;
@@ -442,6 +442,8 @@
             <h4>Debug Information</h4>
             <p>Expected Code: <span id="expected-code"></span></p>
             <p>Scanned Code: <span id="scanned-code"></span></p>
+            <p>Code Length: <span id="code-length"></span></p>
+            <p>Character Codes: <span id="char-codes"></span></p>
         </div>
         
         <!-- Team info section (to be populated by your friend's code) -->
@@ -474,14 +476,14 @@
         <div class="modal-content">
             <span class="close-button" id="close-manual-modal">&times;</span>
             <h2 class="modal-title">Enter the Secret Code</h2>
-            <input type="text" id="manual-input" class="manual-input" placeholder="Enter the 8-digit code" maxlength="8">
+            <input type="text" id="manual-input" class="manual-input" placeholder="Enter the 8-character code" maxlength="8">
             <button id="submit-code" class="submit-button">Submit</button>
         </div>
     </div>
     
     <script>
-        // The correct QR code value - UPDATE THIS WITH YOUR ACTUAL 8-DIGIT CODE
-        const CORRECT_QR_CODE = "12345678"; // Changed to 8 digits
+        // The correct QR code value - UPDATED TO YOUR CODE
+        const CORRECT_QR_CODE = "x02hy583";
         
         // DOM elements
         const scanButton = document.getElementById('scan-button');
@@ -502,6 +504,8 @@
         const debugInfo = document.getElementById('debug-info');
         const expectedCodeSpan = document.getElementById('expected-code');
         const scannedCodeSpan = document.getElementById('scanned-code');
+        const codeLengthSpan = document.getElementById('code-length');
+        const charCodesSpan = document.getElementById('char-codes');
         
         // HTML5 QR Code scanner instance
         let html5QrCode = null;
@@ -520,11 +524,8 @@
                 permissionHelp.style.display = 'block';
             }
             
-            // Show debug info in development
-            if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
-                debugInfo.style.display = 'block';
-                expectedCodeSpan.textContent = CORRECT_QR_CODE;
-            }
+            // Show expected code in debug info
+            expectedCodeSpan.textContent = CORRECT_QR_CODE;
         });
         
         // Function to update team info from local storage
@@ -688,9 +689,15 @@
             scannerModal.style.display = 'none';
             
             // Update debug info
-            if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
-                scannedCodeSpan.textContent = decodedText;
+            scannedCodeSpan.textContent = decodedText;
+            codeLengthSpan.textContent = decodedText.length;
+            
+            // Get character codes for debugging
+            const charCodes = [];
+            for (let i = 0; i < decodedText.length; i++) {
+                charCodes.push(decodedText.charCodeAt(i));
             }
+            charCodesSpan.textContent = charCodes.join(', ');
             
             // Show loading animation
             loading.style.display = 'block';
