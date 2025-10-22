@@ -1,383 +1,96 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>JUMANJI — Web Hunt</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JUMANJI — Web Hunt</title>
+<!-- QR Scanner CDN -->
+<script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/minified/html5-qrcode.min.js"></script>
+<style>
+  /* Basic Reset */
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; font-family: Arial, sans-serif; background: linear-gradient(#14321a,#2b6b33); color: #fff; }
+  body { display: flex; justify-content: center; align-items: center; padding: 16px; }
 
-  <!-- html5-qrcode CDN (used to open camera & scan QR) -->
-  <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/minified/html5-qrcode.min.js"></script>
+  /* Card container */
+  .card { width: 100%; max-width: 420px; background: rgba(0,0,0,0.3); border-radius: 16px; padding: 20px; text-align: center; box-shadow: 0 6px 20px rgba(0,0,0,0.5); }
 
-  <style>
-    /* --------- Basic reset --------- */
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    html,body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial; color: #f7f7f2; }
+  h1 { font-size: 28px; margin-bottom: 12px; color: #fff8d6; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+  .hint { background: #f9f4e6; color: #2e2a18; border-radius: 10px; padding: 12px; margin: 12px 0; font-weight: 600; }
 
-    /* --------- Page layout --------- */
-    body {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 24px;
-      background: linear-gradient(180deg,#14321a 0%, #1b4b24 40%, #2b6b33 100%);
-      background-attachment: fixed;
-      min-height: 100vh;
-    }
+  .btn { background: linear-gradient(#2b8a3a, #1f6d2a); border: none; padding: 12px 18px; border-radius: 10px; color: #fff; font-weight: 700; font-size: 16px; cursor: pointer; margin-top: 8px; width: 100%; }
+  .btn:active { transform: translateY(2px); }
 
-    .card {
-      width: 100%;
-      max-width: 480px;
-      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-      border-radius: 16px;
-      padding: 20px;
-      box-shadow: 0 10px 30px rgba(6,16,6,0.6), inset 0 1px 0 rgba(255,255,255,0.02);
-      border: 1px solid rgba(255,255,255,0.04);
-      position: relative;
-      overflow: hidden;
-    }
+  #scannerWrap { display: none; margin-top: 12px; }
+  .toast { margin-top:12px; padding:10px; border-radius:8px; font-weight:700; display:none; }
+  .toast.success { background: #b9f0c2; color:#0a3816; }
+  .toast.error { background: #ffd2d2; color:#4a0a0a; }
 
-    /* leafy decorative corners */
-    .card::before, .card::after {
-      content: "";
-      position: absolute;
-      width: 220px;
-      height: 220px;
-      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.03), transparent 30%),
-                  linear-gradient(45deg, rgba(255,255,255,0.02), transparent 60%);
-      transform: rotate(-15deg);
-      filter: blur(12px);
-      opacity: 0.8;
-    }
-    .card::before { top: -60px; left: -60px; }
-    .card::after { bottom: -70px; right: -60px; transform: rotate(20deg); }
-
-    header {
-      text-align: center;
-      margin-bottom: 18px;
-    }
-    h1 {
-      font-size: 28px;
-      letter-spacing: 2px;
-      margin-bottom: 6px;
-      color: #fff8d6;
-      text-shadow: 0 2px 6px rgba(0,0,0,0.6);
-    }
-    .subtitle {
-      font-size: 12px;
-      color: rgba(255,255,255,0.8);
-      opacity: 0.9;
-    }
-
-    /* hint box (scroll-like) */
-    .hint {
-      background: linear-gradient(180deg,#f9f4e6 0%, #efe7c9 100%);
-      color: #2e2a18;
-      border-radius: 10px;
-      padding: 14px;
-      margin: 12px 0 18px 0;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.45);
-      font-weight: 600;
-      font-size: 15px;
-      line-height: 1.2;
-    }
-
-    /* scan button */
-    .controls {
-      display:flex;
-      gap:10px;
-      justify-content:center;
-      align-items:center;
-    }
-    .btn {
-      background: linear-gradient(180deg,#2b8a3a, #1f6d2a);
-      border: none;
-      padding: 12px 18px;
-      border-radius: 10px;
-      color: #fffbe6;
-      font-weight: 700;
-      font-size: 16px;
-      cursor: pointer;
-      box-shadow: 0 8px 18px rgba(0,0,0,0.35);
-      transition: transform .16s ease, box-shadow .16s ease;
-      display: inline-flex;
-      gap: 10px;
-      align-items:center;
-    }
-    .btn:active { transform: translateY(2px); }
-    .btn:focus { outline: 3px solid rgba(255,255,255,0.06); }
-
-    /* small note */
-    .note {
-      margin-top: 12px;
-      font-size: 12px;
-      text-align:center;
-      color: rgba(255,255,255,0.85);
-      opacity: 0.9;
-    }
-
-    /* scanner modal area */
-    #scannerWrap {
-      margin-top: 14px;
-      display:none;
-      border-radius:10px;
-      overflow:hidden;
-      background: rgba(0,0,0,0.45);
-      padding: 8px;
-    }
-
-    /* success & error toast */
-    .toast {
-      width:100%;
-      text-align:center;
-      padding:10px;
-      border-radius:8px;
-      font-weight:700;
-      display:none;
-      margin-top:12px;
-    }
-    .toast.success { background: linear-gradient(90deg,#b9f0c2,#78e0a2); color:#0a3816; }
-    .toast.error { background: linear-gradient(90deg,#ffd2d2,#ff9b9b); color:#4a0a0a; }
-
-    /* responsive tweaks */
-    @media (max-width:420px){
-      h1 { font-size:24px; }
-      .hint { font-size:14px; padding:12px; }
-      .btn { width:100%; justify-content:center; }
-      .controls { flex-direction: column; }
-    }
-
-  </style>
+  @media (max-width:420px){ h1{font-size:24px;} .hint{font-size:14px;} }
+</style>
 </head>
 <body>
-  <div class="card" role="main" aria-labelledby="pageTitle">
-    <header>
-      <h1 id="pageTitle">🌿 JUMANJI</h1>
-      <div class="subtitle">Web Treasure Hunt — Play & Find</div>
-    </header>
-
-    <!-- Hint box (your friend or firebase can change hint text into localStorage later) -->
+  <div class="card">
+    <h1>🌿 JUMANJI</h1>
     <div id="hintBox" class="hint">Find the hidden code near the old tree!</div>
+    <button id="scanBtn" class="btn">Scan QR</button>
 
-    <div class="controls">
-      <button id="scanBtn" class="btn" aria-controls="scannerWrap" aria-expanded="false">
-        <!-- simple icon + text -->
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="opacity:0.95"><rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="14" width="7" height="7" rx="1"></rect><rect x="3" y="14" width="7" height="7" rx="1"></rect></svg>
-        Scan QR
-      </button>
-    </div>
-
-    <!-- scanner container (hidden by default) -->
-    <div id="scannerWrap" aria-hidden="true">
+    <div id="scannerWrap">
       <div id="reader" style="width:100%;"></div>
-      <div style="display:flex; gap:8px; justify-content:center; margin-top:8px;">
-        <button id="stopBtn" class="btn" style="background: linear-gradient(180deg,#7a2b2b,#5b1c1c);">Stop</button>
-      </div>
+      <button id="stopBtn" class="btn" style="background:#7a2b2b;">Stop Scanner</button>
     </div>
 
-    <!-- toast messages -->
-    <div id="toast" class="toast" role="status" aria-live="polite"></div>
-
-    <div class="note">Use the in-game scanner only. Scans other codes will be rejected.</div>
+    <div id="toast" class="toast"></div>
   </div>
 
-  <script>
-    /********* Simple single-file QR scanner page *********
-     - Uses html5-qrcode (CDN) to open camera & decode QR
-     - Accepts ONLY the exact secret code below
-     - On success: shows success toast, stops scanner, then redirects to loading.html
-     - On wrong code: shows error toast briefly but keeps scanner active
-     ****************************************************/
+<script>
+const SECRET_CODE = "x02hy583";
+const scanBtn = document.getElementById("scanBtn");
+const stopBtn = document.getElementById("stopBtn");
+const scannerWrap = document.getElementById("scannerWrap");
+const toast = document.getElementById("toast");
+let scannerRunning = false;
+let html5QrScanner = null;
 
-    const SECRET_CODE = "x02hy583"; // exact code we expect
-    const scanBtn = document.getElementById("scanBtn");
-    const stopBtn = document.getElementById("stopBtn");
-    const scannerWrap = document.getElementById("scannerWrap");
-    const readerId = "reader";
-    const toast = document.getElementById("toast");
-    let html5QrScanner = null;
-    let scannerRunning = false;
+function showToast(message,type="success",duration=1800){
+  toast.textContent = message;
+  toast.className = "toast "+(type==="success"?"success":"error");
+  toast.style.display="block";
+  setTimeout(()=>{ toast.style.display="none"; }, duration);
+}
 
-    function showToast(message, type = "success", duration = 1800) {
-      toast.textContent = message;
-      toast.className = "toast " + (type === "success" ? "success" : "error");
-      toast.style.display = "block";
-      if (duration > 0) {
-        setTimeout(() => { toast.style.display = "none"; }, duration);
-      }
-    }
+function startScanner(){
+  if(scannerRunning) return;
+  scannerWrap.style.display="block";
+  try{
+    html5QrScanner = new Html5Qrcode("reader",{verbose:false});
+    Html5Qrcode.getCameras().then(cameras=>{
+      if(cameras && cameras.length){
+        const cameraId = cameras.find(c=>/back|rear|environment/i.test(c.label))?.id || cameras[0].id;
+        html5QrScanner.start({deviceId:{exact:cameraId}}, {fps:10, qrbox:250},
+          decodedText=>{
+            if(decodedText === SECRET_CODE){
+              showToast("Code accepted! Redirecting...", "success", 2000);
+              html5QrScanner.stop().then(()=>{ html5QrScanner.clear(); scannerRunning=false; setTimeout(()=>{ window.location.href="loading.html"; },900); });
+            } else{
+              showToast("Invalid QR Code! Try again.", "error",1400);
+            }
+          },
+          ()=>{}
+        ).then(()=>{scannerRunning=true;});
+      } else{ showToast("No cameras found", "error",2000);}
+    }).catch(e=>showToast("Camera access denied", "error",2500));
+  }catch(e){ showToast("Scanner not available", "error",2500);}
+}
 
-    function startScanner() {
-      if (scannerRunning) return;
-      scannerWrap.style.display = "block";
-      scanBtn.setAttribute("aria-expanded","true");
-      scannerWrap.setAttribute("aria-hidden","false");
+function stopScanner(){
+  if(html5QrScanner){
+    html5QrScanner.stop().then(()=>{ html5QrScanner.clear(); scannerRunning=false; scannerWrap.style.display="none"; });
+  } else { scannerWrap.style.display="none"; scannerRunning=false; }
+}
 
-      // try to create new scanner instance
-      try {
-        // html5-qrcode expects element id
-        html5QrScanner = new Html5Qrcode(readerId, /* verbose= */ false);
-
-        // config: prefer back camera on mobile, small qrbox for fast scanning
-        const config = {
-          fps: 10,
-          qrbox: { width: 250, height: 250 },
-          aspectRatio: 1.0,
-          // disable flip: we want natural behavior for back camera
-          disableFlip: false,
-        };
-
-        // choose camera: preferring environment (back) if available
-        Html5Qrcode.getCameras().then(cameras => {
-          let cameraId = null;
-          if (cameras && cameras.length) {
-            // choose environment-facing if available
-            const envCam = cameras.find(c => /back|rear|environment/i.test(c.label));
-            cameraId = (envCam ? envCam.id : cameras[0].id);
-          }
-
-          html5QrScanner.start(
-            cameraId ? { deviceId: { exact: cameraId } } : { facingMode: "environment" },
-            config,
-            qrCodeSuccessCallback,
-            qrCodeFailureCallback
-          ).then(() => {
-            scannerRunning = true;
-          }).catch(err => {
-            console.error("Failed to start scanner:", err);
-            showToast("Camera error or permission denied.", "error", 3000);
-            stopScanner();
-          });
-
-        }).catch(err => {
-          // if camera list fails, try default facingMode
-          html5QrScanner.start({ facingMode: "environment" }, config, qrCodeSuccessCallback, qrCodeFailureCallback)
-            .then(()=> { scannerRunning=true; })
-            .catch(e => {
-              console.error("Scanner generic start failed", e);
-              showToast("Cannot access camera.", "error", 3000);
-              stopScanner();
-            });
-        });
-
-      } catch (e) {
-        console.error("Scanner init error", e);
-        showToast("Scanner not available.", "error", 2500);
-      }
-    }
-
-    function stopScanner() {
-      if (!html5QrScanner) {
-        scannerWrap.style.display = "none";
-        scanBtn.setAttribute("aria-expanded","false");
-        scannerWrap.setAttribute("aria-hidden","true");
-        scannerRunning = false;
-        return;
-      }
-
-      html5QrScanner.stop().then(() => {
-        // stop camera & cleanup
-        html5QrScanner.clear();
-        html5QrScanner = null;
-        scannerWrap.style.display = "none";
-        scanBtn.setAttribute("aria-expanded","false");
-        scannerWrap.setAttribute("aria-hidden","true");
-        scannerRunning = false;
-      }).catch(err => {
-        console.warn("Error stopping scanner:", err);
-        // still try to hide UI
-        try { html5QrScanner.clear(); } catch(e) {}
-        html5QrScanner = null;
-        scannerWrap.style.display = "none";
-        scanBtn.setAttribute("aria-expanded","false");
-        scannerWrap.setAttribute("aria-hidden","true");
-        scannerRunning = false;
-      });
-    }
-
-    // Called when a QR is decoded successfully
-    function qrCodeSuccessCallback(decodedText, decodedResult) {
-      // debug logging (comment out in production)
-      // console.log(`Decoded: ${decodedText}`, decodedResult);
-
-      if (decodedText === SECRET_CODE) {
-        // exact match -> success flow
-        showToast("Code accepted! Redirecting...", "success", 2000);
-
-        // stop scanning and redirect after short delay
-        if (html5QrScanner) {
-          // stop immediately to free camera
-          html5QrScanner.stop().then(() => {
-            try { html5QrScanner.clear(); } catch(e){}
-            scannerRunning = false;
-            // redirect after small delay to let user see toast
-            setTimeout(() => {
-              window.location.href = "loading.html";
-            }, 900);
-          }).catch((_err) => {
-            // if stop fails, still redirect
-            setTimeout(() => { window.location.href = "loading.html"; }, 900);
-          });
-        } else {
-          setTimeout(() => { window.location.href = "loading.html"; }, 900);
-        }
-      } else {
-        // not the expected code -> show error but keep scanner running
-        showToast("Invalid QR Code! Try again.", "error", 1400);
-        // don't stop scanner; allow retry
-      }
-    }
-
-    // optional callback for continuous scan attempts (we don't need to use it)
-    function qrCodeFailureCallback(errorMessage) {
-      // errorMessage is usually decode errors while scanning frames.
-      // No need to show every failure; keep silent to avoid spam.
-    }
-
-    // Button handlers
-    scanBtn.addEventListener("click", () => {
-      // If scanner running, pressing scan toggles stop
-      if (scannerRunning) {
-        stopScanner();
-        return;
-      }
-
-      // Optionally: if you want to read team code or player status from localStorage and show it:
-      // const teamCode = localStorage.getItem('teamCode') || 'No team code saved';
-      // if (teamCode) { document.getElementById('hintBox').textContent = 'Team: '+teamCode + ' — ' + document.getElementById('hintBox').textContent; }
-
-      startScanner();
-    });
-
-    stopBtn.addEventListener("click", () => {
-      stopScanner();
-    });
-
-    // Accessibility: stop scanner when page hidden
-    document.addEventListener("visibilitychange", () => {
-      if (document.hidden) {
-        if (scannerRunning) {
-          stopScanner();
-        }
-      }
-    });
-
-    // If you want to pre-fill hintBox from localStorage (example: team code, player status),
-    // your firebase friend can set these into localStorage and this page will display them.
-    (function prefillFromLocal() {
-      try {
-        const teamCode = localStorage.getItem('teamCode');
-        const playerStatus = localStorage.getItem('playerStatus');
-        if (teamCode || playerStatus) {
-          let extra = [];
-          if (teamCode) extra.push("Team: " + teamCode);
-          if (playerStatus) extra.push("Status: " + playerStatus);
-          // show both above the hint text
-          const hintBox = document.getElementById('hintBox');
-          hintBox.textContent = extra.join(" • ") + " — " + hintBox.textContent;
-        }
-      } catch(e) { /* ignore localStorage errors */ }
-    })();
-
-  </script>
+scanBtn.addEventListener("click", ()=>{ startScanner(); });
+stopBtn.addEventListener("click", ()=>{ stopScanner(); });
+</script>
 </body>
 </html>
