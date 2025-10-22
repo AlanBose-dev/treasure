@@ -354,6 +354,28 @@
             background-color: #ffdd44;
         }
         
+        /* Debug info */
+        .debug-info {
+            display: none;
+            background-color: rgba(255, 0, 0, 0.1);
+            border: 1px solid #ff0000;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+        
+        .debug-info h4 {
+            color: #ff0000;
+            margin-bottom: 10px;
+        }
+        
+        .debug-info p {
+            margin-bottom: 8px;
+            word-break: break-all;
+        }
+        
         /* Responsive adjustments */
         @media (max-width: 600px) {
             h1 {
@@ -416,6 +438,12 @@
             <p>5. Try switching between front and back cameras</p>
         </div>
         
+        <div id="debug-info" class="debug-info">
+            <h4>Debug Information</h4>
+            <p>Expected Code: <span id="expected-code"></span></p>
+            <p>Scanned Code: <span id="scanned-code"></span></p>
+        </div>
+        
         <!-- Team info section (to be populated by your friend's code) -->
         <div class="team-info">
             <h3>Team Information</h3>
@@ -446,14 +474,14 @@
         <div class="modal-content">
             <span class="close-button" id="close-manual-modal">&times;</span>
             <h2 class="modal-title">Enter the Secret Code</h2>
-            <input type="text" id="manual-input" class="manual-input" placeholder="Enter the 6-digit code" maxlength="6">
+            <input type="text" id="manual-input" class="manual-input" placeholder="Enter the 8-digit code" maxlength="8">
             <button id="submit-code" class="submit-button">Submit</button>
         </div>
     </div>
     
     <script>
-        // The correct QR code value
-        const CORRECT_QR_CODE = "x02hy583";
+        // The correct QR code value - UPDATE THIS WITH YOUR ACTUAL 8-DIGIT CODE
+        const CORRECT_QR_CODE = "12345678"; // Changed to 8 digits
         
         // DOM elements
         const scanButton = document.getElementById('scan-button');
@@ -471,6 +499,9 @@
         const cameraSwitch = document.getElementById('camera-switch');
         const teamCode = document.getElementById('team-code');
         const playerStatus = document.getElementById('player-status');
+        const debugInfo = document.getElementById('debug-info');
+        const expectedCodeSpan = document.getElementById('expected-code');
+        const scannedCodeSpan = document.getElementById('scanned-code');
         
         // HTML5 QR Code scanner instance
         let html5QrCode = null;
@@ -487,6 +518,12 @@
             if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
                 displayError("Camera access requires HTTPS. Please use a secure connection.");
                 permissionHelp.style.display = 'block';
+            }
+            
+            // Show debug info in development
+            if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+                debugInfo.style.display = 'block';
+                expectedCodeSpan.textContent = CORRECT_QR_CODE;
             }
         });
         
@@ -650,6 +687,11 @@
             stopScanner();
             scannerModal.style.display = 'none';
             
+            // Update debug info
+            if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+                scannedCodeSpan.textContent = decodedText;
+            }
+            
             // Show loading animation
             loading.style.display = 'block';
             qrResult.style.display = 'none';
@@ -658,7 +700,17 @@
             setTimeout(() => {
                 loading.style.display = 'none';
                 
-                if (decodedText === CORRECT_QR_CODE) {
+                // Normalize both codes for comparison (trim whitespace and convert to lowercase)
+                const normalizedDecodedText = decodedText.trim().toLowerCase();
+                const normalizedCorrectCode = CORRECT_QR_CODE.trim().toLowerCase();
+                
+                console.log('Comparing codes:', {
+                    decoded: normalizedDecodedText,
+                    correct: normalizedCorrectCode,
+                    match: normalizedDecodedText === normalizedCorrectCode
+                });
+                
+                if (normalizedDecodedText === normalizedCorrectCode) {
                     // Correct QR code scanned
                     displaySuccess("Correct QR code! Redirecting...");
                     
